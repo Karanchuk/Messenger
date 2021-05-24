@@ -18,15 +18,15 @@ public class MyServer {
     public MyServer() {
         try (ServerSocket server = new ServerSocket(ChatConstants.PORT)){
             authService = new BaseAuthService();
-            authService.start();
-            clients = new ArrayList<>();
-            while (true) {
-                System.out.println("Сервер ожидает подключения");
-                Socket socket = server.accept();
-                System.out.println("Клиент подключился");
-                new ClientHandler(this, socket); // Создаем нового клиента, передаем ему сервер и сокет
+            if (authService.start()) {
+                clients = new ArrayList<>();
+                while (true) {
+                    System.out.println("Сервер ожидает подключения");
+                    Socket socket = server.accept();
+                    System.out.println("Клиент подключился");
+                    new ClientHandler(this, socket); // Создаем нового клиента, передаем ему сервер и сокет
+                }
             }
-
         } catch (IOException exception) {
             exception.printStackTrace();
         } finally {

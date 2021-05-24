@@ -30,7 +30,7 @@ public class ClientHandler {
             
             new Thread(() -> {
                 try {
-                    authentification();
+                    authentication();
                     if (!this.socket.isClosed()) {
                         readMessages();
                     }
@@ -47,13 +47,24 @@ public class ClientHandler {
     }
 
     // /auth login pass - хотим отправлять такое сообщение в потоке для авторизации
-    private void authentification() throws IOException {
+    private void authentication() throws IOException {
         long currentTimeMillis = System.currentTimeMillis();
         while (true) {
             if (inputStream.available() != 0) {
                 currentTimeMillis = System.currentTimeMillis();
                 String message = inputStream.readUTF();
-                if (message.startsWith(ChatConstants.AUTH_COMMAND)) {
+                if (message.startsWith(ChatConstants.REG)) { // создание нового пользователя
+                    String[] parts = message.split("\\s+");
+                    if (server.getAuthService().addNewUser(parts[1], parts[2], parts[3])) {
+                        sendMsg(ChatConstants.AUTH_OK + " " + parts[1]);
+                        name = parts[1];
+                        server.subscribe(this);
+                        server.broadcastMessage(name, name + " вошел в чат");
+                        return;
+                    } else {
+                        sendMsg("Ник уже существует");
+                    }
+                } else if (message.startsWith(ChatConstants.AUTH_COMMAND)) {
                     String[] parts = message.split("\\s+"); // разбивает строку по пробелам на массив строк длиной 3
                     String nick = server.getAuthService().getNickByLoginAndPass(parts[1], parts[2]);
                     if (nick != null) { // Проверяем корректность логина + пароля
@@ -92,6 +103,23 @@ public class ClientHandler {
             System.out.println("от " + name + ": " + messageFromClient);
             if (messageFromClient.equals(ChatConstants.STOP_WORD)) {
                 return;
+            } else if (messageFromClient.startsWith(ChatConstants.RENAME)) {
+                String[] parts = messageFromClient.split("\\s+");
+                if (parts.length >= 2) {
+                    messageFromClient = ChatConstants.DIRECT + " " + name + " ошибка при изменении имени";
+                    if (server.getAuthService().changeNickname(name, parts[1])) {
+                        messageFromClient = name  + " изменил имя на " + parts[1];
+                        name = parts[1];
+                    }
+                }
+            } else if (messageFromClient.startsWith(ChatConstants.CHA_PASS)) {
+                String[] parts = messageFromClient.split("\\s+");
+                if (parts.length >=4) {
+                    messageFromClient = ChatConstants.DIRECT + " " + name + " ошибка при изменении пароля";
+                    if (server.getAuthService().changePassword(parts[1], parts[2], parts[3])) {
+                        messageFromClient = ChatConstants.DIRECT + " " + name + " пароль успешно изменен";
+                    }
+                }
             }
             server.broadcastMessage(name, "[" + name + "]: " + messageFromClient);
         }

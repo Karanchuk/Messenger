@@ -7,7 +7,7 @@ public interface AuthService {
     /**
      * Запустить сервис
      */
-    void start();
+    boolean start();
 
     /**
      * Остановить сервис
@@ -21,4 +21,12 @@ public interface AuthService {
      * @return
      */
     String getNickByLoginAndPass(String login, String pass);
+
+    boolean addNewUser(String nickname, String login, String password);
+
+    boolean changeNickname(String nickname, String newNickname);
+
+    boolean changePassword(String login, String password, String newPassword);
+
+
 }

@@ -4,6 +4,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Отвечает за обмен между клиентом и сервером (обслуживает клиента)
@@ -20,15 +21,30 @@ public class ClientHandler {
         return name;
     }
 
-    public ClientHandler(MyServer server, Socket socket) {
+    public ClientHandler(MyServer server, Socket socket, ExecutorService executorService) {
         try {
             this.socket = socket;
             this.server = server;
             this.inputStream = new DataInputStream(socket.getInputStream());
             this.outputStream = new DataOutputStream(socket.getOutputStream());
             this.name = "";
-            
-            new Thread(() -> {
+
+            executorService.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        authentication();
+                        if (!socket.isClosed()) {
+                            readMessages();
+                        }
+                    } catch (IOException exception) {
+                        exception.printStackTrace();
+                    } finally {
+                        closeConnection();
+                    }
+                }
+            });
+            /*new Thread(() -> {
                 try {
                     authentication();
                     if (!this.socket.isClosed()) {
@@ -39,7 +55,7 @@ public class ClientHandler {
                 } finally {
                     closeConnection();
                 }
-            }).start();
+            }).start();*/
             
         } catch (IOException ex) {
             System.out.println("Проблема при создании клиента");

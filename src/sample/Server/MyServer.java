@@ -6,6 +6,8 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 /**
@@ -14,6 +16,7 @@ import java.util.stream.Collectors;
 public class MyServer {
     private List<ClientHandler> clients;
     private AuthService authService;
+    private ExecutorService executorService = Executors.newCachedThreadPool();
 
     public MyServer() {
         try (ServerSocket server = new ServerSocket(ChatConstants.PORT)){
@@ -24,7 +27,7 @@ public class MyServer {
                     System.out.println("Сервер ожидает подключения");
                     Socket socket = server.accept();
                     System.out.println("Клиент подключился");
-                    new ClientHandler(this, socket); // Создаем нового клиента, передаем ему сервер и сокет
+                    new ClientHandler(this, socket, executorService); // Создаем нового клиента, передаем ему сервер и сокет
                 }
             }
         } catch (IOException exception) {
@@ -32,6 +35,7 @@ public class MyServer {
         } finally {
             if (authService != null) {
                 authService.stop();
+                executorService.shutdown();
             }
         }
     }

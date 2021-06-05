@@ -1,6 +1,7 @@
 package sample;
 
 import java.io.*;
+import java.util.ArrayList;
 
 public class MessageLog {
     private final String nickname;
@@ -44,13 +45,18 @@ public class MessageLog {
 
         if (reader == null) reader = new BufferedReader(fileReader);
 
-        int counter = 0;
+        ArrayList<String> list = new ArrayList<>();
         String line = "";
-        while ((line = reader.readLine()) != null && counter <= 100) {
-            lines += line + "\n";
-            counter++;
+        while ((line = reader.readLine()) != null) {
+            list.add(line);
         }
+
         reader.close();
+
+        for (int i = ((list.size() - 100) > 0 ? (list.size() - 100 - 1) : 0); i < list.size(); i++) {
+            lines += list.get(i) + "\n";
+        }
+
         return lines;
     }
 
